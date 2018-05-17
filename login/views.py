@@ -12,15 +12,20 @@ def index(request):
 
 
 def login(request):
+    if request.session.get('is_login', None):
+        return redirect("/index/")
     if request.method == "POST":
         login_form = forms.UserForm(request.POST)
-        message = "所有字段都必须填写！"
-        if login_form.is_valid():  # 确保用户名和密码都不为空
+        message = "请检查填写的内容！"
+        if login_form.is_valid():
             username = login_form.cleaned_data['username']
             password = login_form.cleaned_data['password']
             try:
                 user = models.User.objects.get(name=username)
                 if user.password == password:
+                    request.session['is_login'] = True
+                    request.session['user_id'] = user.id
+                    request.session['user_name'] = user.name
                     return redirect('/index/')
                 else:
                     message = "密码不正确！"
@@ -37,6 +42,8 @@ def register(request):
 
 
 def logout(request):
-    pass
+    if not request.session.get('is_login', None):
+        return redirect("/index/")
+    request.session.flush()
     return redirect("/index/")
 
